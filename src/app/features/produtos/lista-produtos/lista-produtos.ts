@@ -1,20 +1,23 @@
 import { Component, signal, computed, effect, inject } from '@angular/core';
 import { Produto } from '../produto/produto';
 import { ProdutosService } from '../produtos.service';
-
-
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-lista-produtos',
-  imports: [Produto],
+  imports: [Produto, MatButtonModule ],
   templateUrl: './lista-produtos.html',
   styleUrl: './lista-produtos.css',
 })
 export class ListaProdutos {
   private produtosService = inject(ProdutosService);
-  constructor() {
 
+  erro = signal<string | null>(null);
+
+  constructor() {
+    // carregada API
     this.carregarProdutos();
+
     effect(() => {
       console.log('Lista de produtos alterada:', this.produtos());
     });
@@ -28,30 +31,27 @@ export class ListaProdutos {
     });
   }
 
-
-carregarProdutos() {
-this.carregando.set(true);
-
-this.produtosService.buscarProdutos().subscribe({
-next: (dados) => {
-const produtos = this.produtosService.transformarProdutos(dados);
-this.produtos.set(produtos);
-this.carregando.set(false);
-},
-error: (erro) => {
-console.error('Erro ao carregar produtos:', erro);
-this.carregando.set(false);
-},
-});
-}
+  carregarProdutos() {
+    this.erro.set(null); // limpa erroanterior
+    this.carregando.set(true); // ativaloading
+    this.produtosService.buscarProdutos().subscribe({
+      next: (dados) => {
+        const produtos = this.produtosService.transformarProdutos(dados);
+        this.produtos.set(produtos);
+        this.carregando.set(false);
+      },
+      error: (erro) => {
+        console.error('Erro ao carregar produtos:', erro);
+        this.erro.set
+        ('Erro ao carregar produtos. Verifique sua conexão e tente novamente.');
+        this.carregando.set(false);
+      },
+    });
+  }
 
   produtoSelecionado = signal<string | null>(null);
 
-  
-  produtos = signal<
-{ nome: string; preco: number }[]
->([]);
-  ;
+  produtos = signal<{ nome: string; preco: number }[]>([]);
 
   carregando = signal(true);
 
@@ -73,11 +73,11 @@ this.carregando.set(false);
     this.produtoSelecionado.set(nome);
   }
 
-  adicionarProduto() {;
+  adicionarProduto() {
     this.produtos.update((listaAtual) => [...listaAtual, { nome: 'Teclado', preco: 250 }]);
   }
 
-  substituirProdutos() {;
+  substituirProdutos() {
     this.produtos.set([{ nome: 'Produtonovo', preco: 999 }]);
   }
 
